@@ -172,7 +172,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./config/prometheus/prometheus.yml:/etc/infrastructure/prometheus.yml
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     networks:
       - observability-net
     healthcheck:
@@ -196,6 +196,8 @@ services:
       - observability-net
     volumes:
       - grafana-storage:/var/lib/grafana
+      - ./dashboards/:/etc/grafana/provisioning/dashboards
+      - ./datasources:/etc/grafana/provisioning/datasources
     healthcheck:
       test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health" ]
       interval: 10s
