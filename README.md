@@ -22,6 +22,10 @@ infrastructure/diagrams/containers.puml
 
 infrastructure/diagrams/EventsCollectorComponent.puml
 
+![img.png](EventsCollectorComponent.png)
+
+infrastructure/diagrams/EventsCollectorSequence.puml
+
 ![img.png](img.png)
 
 Запускаются:
