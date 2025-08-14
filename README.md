@@ -13,10 +13,16 @@
 ## Архитектура: 
 
 infrastructure/diagrams/context.puml
+
 ![img.png](context.png)
 
 infrastructure/diagrams/containers.puml
+
 ![img_1.png](containers.png)
+
+infrastructure/diagrams/EventsCollectorComponent.puml
+
+![img.png](img.png)
 
 Запускаются:
 
@@ -45,7 +51,8 @@ infrastructure/diagrams/containers.puml
         │
         └───diagrams
             ├───containers.puml
-            └───context.puml
+            ├───context.puml
+            └───EventsCollectorComponent.puml
 
 ```
 

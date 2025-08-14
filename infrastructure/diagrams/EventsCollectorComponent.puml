@@ -1,0 +1,32 @@
+@startuml containers
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+title Events Collector Service - Container Diagram
+
+' Внешние контейнеры
+Container_Ext(kafka_events, "Kafka Topic: events", "Kafka", "Источник событий в формате Avro")
+Container_Ext(kafka_device_ids, "Kafka Topic: device-id-topic", "Kafka", "Выходной топик с уникальными device_id")
+Container_Ext(schema_registry, "Schema Registry", "Confluent", "Хранение и валидация Avro-схем")
+ContainerDb(cassandra, "Apache Cassandra", "NoSQL Time-series DB", "Хранение событий для аналитики")
+
+' Внутренние контейнеры сервиса
+Boundary(iot_platform, "") {
+    Container(events_collector_listener, "Kafka Listener", "Spring Kafka / Java", "Подписывается на Kafka-топик events, десериализует данные через Avro Deserializer и передаёт события в Event Service")
+    Container(events_collector_deserializer, "Avro Deserializer", "Java / Avro", "Десериализация Avro-сообщений (используется только Kafka Listener)")
+    Container(events_collector_service, "Event Service", "Java / Spring", "Обрабатывает события: проверка кэша, сохранение в Cassandra, публикация device_id")
+    Container(events_collector_cache, "DeviceId Cache", "Java / ConcurrentHashMap", "Внутрипроцессный кэш для уже обработанных device_id")
+    Container(events_collector_repo, "Cassandra Repository", "Spring Data Cassandra / Java", "Сохраняет события в Apache Cassandra для аналитики")
+    Container(events_collector_producer, "Kafka Producer", "Spring Kafka / Java", "Публикует уникальные device_id в Kafka-топик device-id-topic")
+}
+
+' Поток данных
+Rel(events_collector_listener, kafka_events, "consume:events", "Avro")
+Rel(events_collector_listener, events_collector_deserializer, "Обращается для десериализации")
+Rel(events_collector_listener, schema_registry, "Получает схему для десериализации", "REST")
+Rel(events_collector_listener, events_collector_service, "Передаёт десериализованные события")
+Rel(events_collector_service, events_collector_cache, "Проверяет и обновляет device_id")
+Rel(events_collector_service, events_collector_repo, "Передаёт уникальные события")
+Rel(events_collector_repo, cassandra, "Сохраняет события", "CQL")
+Rel(events_collector_service, events_collector_producer, "Передаёт уникальные device_id")
+Rel(events_collector_producer, kafka_device_ids, "produce: device_id", "Avro")
+
+@enduml
