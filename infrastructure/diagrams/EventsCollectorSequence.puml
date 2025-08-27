@@ -1,0 +1,37 @@
+@startuml events_collector_sequence_outbox
+title Events Collector Service - Sequence Diagram (with Transactional Outbox)
+
+actor KafkaEvents as kafka_events
+participant "Events Collector Listener" as listener
+participant "Avro Deserializer" as deserializer
+participant "Schema Registry" as schema_registry
+participant "Event Service" as event_service
+participant "ConcurrentHashMap Cache" as cache
+participant "Cassandra Repository" as repo
+participant "Outbox Repository" as outbox_repo
+participant "Outbox Processor" as outbox_processor
+participant "DeviceId Kafka Producer" as producer
+participant KafkaDeviceIds as kafka_device_ids
+
+kafka_events -> listener : Получить новое событие Avro
+listener -> deserializer : Десериализовать сообщение
+deserializer -> schema_registry : Запрос схемы Avro
+schema_registry --> deserializer : Схема
+deserializer --> listener : Объект события
+
+listener -> cache : Проверить device_id
+cache --> listener : Результат
+
+listener -> event_service : Передать событие
+event_service -> repo : Сохранить событие в Cassandra
+event_service -> outbox_repo : Записать сообщение для Kafka (в Outbox)
+repo --> event_service : OK
+outbox_repo --> event_service : OK
+
+... позже ...
+outbox_processor -> outbox_repo : Прочитать сообщения для отправки
+outbox_processor -> producer : Отправить уникальный device_id в Kafka
+producer -> kafka_device_ids : Публикация в device-id-topic
+outbox_processor -> outbox_repo : Пометить как отправленное
+
+@enduml
